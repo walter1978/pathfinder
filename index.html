@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Pathfinder - Prototipo Phaser 3</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d0f14;
+      color: #f3f4f6;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100dvh;
+      width: 100%;
+      padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #game-wrapper {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    #hud-bar {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: space-between;
+      align-items: center;
+      background: #171b24;
+      border: 1px solid #2c3446;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+    .hud-group {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge {
+      background: #232a3b;
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #364159;
+      font-weight: 600;
+    }
+    .badge-ok { color: #34d399; border-color: #065f46; background: #064e3b55; }
+    .badge-gem { color: #fbbf24; }
+    button {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 15px;
+      transition: background 0.15s, transform 0.08s;
+      touch-action: manipulation;
+      min-height: 34px;
+      min-width: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    button:hover { background: #1d4ed8; }
+    button:active { transform: scale(0.96); }
+    button.secondary { background: #334155; }
+    button.secondary:hover { background: #475569; }
+    #game-stage {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    #game-container {
+      width: 100%;
+      max-width: 480px;
+      aspect-ratio: 500 / 750;
+      max-height: calc(100dvh - 210px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #game-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
+      border: 2px solid #262e3f;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    #touch-controls {
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      grid-template-rows: repeat(2, 48px);
+      gap: 8px;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+      margin-top: 2px;
+    }
+    .dpad-btn {
+      width: 100%;
+      height: 100%;
+      font-size: 20px;
+      line-height: 1;
+      padding: 0;
+      border-radius: 10px;
+      background: #1e293b;
+      border: 1px solid #475569;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .dpad-btn:active {
+      background: #2563eb;
+      transform: scale(0.96);
+    }
+    #btn-up { grid-column: 2; grid-row: 1; }
+    #btn-left { grid-column: 1; grid-row: 2; }
+    #btn-down { grid-column: 2; grid-row: 2; }
+    #btn-right { grid-column: 3; grid-row: 2; }
+    #controls-hint {
+      text-align: center;
+      line-height: 1.4;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    kbd {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 11px;
+      color: #e5e7eb;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-wrapper">
+    <div id="hud-bar">
+      <div class="hud-group">
+        <span id="level-label" class="badge">Nivel 1 / 20</span>
+      </div>
+      <div class="hud-group">
+        <button id="btn-prev" class="secondary" type="button" title="Anterior" aria-label="Anterior">◀</button>
+        <button id="btn-next" class="secondary" type="button" title="Siguiente" aria-label="Siguiente">▶</button>
+        <button id="btn-restart" type="button" title="Reiniciar (R)" aria-label="Reiniciar">↻</button>
+        <button id="btn-show-path" class="secondary" type="button" title="Ver solución (V)" aria-label="Ver solución">💡</button>
+      </div>
+    </div>
+
+    <div id="game-stage">
+      <div id="game-container"></div>
+      <div id="touch-controls" aria-label="Controles táctiles">
+        <button id="btn-up" class="dpad-btn" type="button" aria-label="Mover arriba">▲</button>
+        <button id="btn-left" class="dpad-btn" type="button" aria-label="Mover izquierda">◀</button>
+        <button id="btn-down" class="dpad-btn" type="button" aria-label="Mover abajo">▼</button>
+        <button id="btn-right" class="dpad-btn" type="button" aria-label="Mover derecha">▶</button>
+      </div>
+    </div>
+
+    <div id="controls-hint">
+      Controles: <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> o <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> para moverte &nbsp;|&nbsp;
+      <kbd>R</kbd> para reiniciar &nbsp;|&nbsp;
+      <kbd>V</kbd> para ver solución &nbsp;|&nbsp;
+      Todas las casillas del camino son <b>Frágiles</b> (se caen al salir de ellas)
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js?v=clean_hud"></script>
+</body>
+</html>
