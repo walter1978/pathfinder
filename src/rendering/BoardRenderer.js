@@ -914,14 +914,31 @@ export class BoardRenderer {
   showBanner(text, color) {
     const centerX = GAME_WIDTH / 2;
     const centerY = GAME_HEIGHT / 2;
-    this.scene.add.rectangle(centerX, centerY, 380, 74, 0x0f172a, 0.9)
-      .setStrokeStyle(2, Phaser.Display.Color.HexStringToColor(color).color)
-      .setDepth(200);
-    this.scene.add.text(centerX, centerY, text, {
-      fontSize: '21px',
+    const bannerWidth = Math.min(420, GAME_WIDTH - 20);
+    const hexColor = Phaser.Display.Color.HexStringToColor(color).color;
+
+    const container = this.scene.add.container(centerX, centerY).setDepth(200);
+
+    const txt = this.scene.add.text(0, 0, text, {
+      fontFamily: "'Segoe UI', Roboto, system-ui, sans-serif",
+      fontSize: '16px',
       fontStyle: 'bold',
-      color
-    }).setOrigin(0.5).setDepth(201);
+      color,
+      align: 'center',
+      lineSpacing: 6,
+      wordWrap: { width: bannerWidth - 28, useAdvancedWrap: true }
+    }).setOrigin(0.5);
+
+    const bannerHeight = Math.max(76, txt.height + 26);
+
+    const bg = this.scene.add.graphics();
+    bg.fillStyle(0x0f172a, 0.95);
+    bg.fillRoundedRect(-bannerWidth / 2, -bannerHeight / 2, bannerWidth, bannerHeight, 10);
+    bg.lineStyle(2, hexColor, 1);
+    bg.strokeRoundedRect(-bannerWidth / 2, -bannerHeight / 2, bannerWidth, bannerHeight, 10);
+
+    container.add([bg, txt]);
+    return container;
   }
 
   addGraphics() {

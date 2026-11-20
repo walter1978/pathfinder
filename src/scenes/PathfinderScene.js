@@ -9,6 +9,8 @@ import {
   OFFSET_Y,
   ENEMY_MOVE_DELAY_MS,
   WIN_NEXT_LEVEL_DELAY_MS,
+  LOSE_RESTART_DELAY_MS,
+  SOFTLOCK_RESTART_DELAY_MS,
   CELL_TYPE,
   MAP_SYMBOL
 } from '../config/constants.js';
@@ -17,11 +19,10 @@ import {
   parseRawMap,
   symbolToCellType,
   isWalkableCell,
-  hasAvailableMoves,
   determineEnemyPatrol,
   getNextLinearPatrolStep
 } from '../domain/gridRules.js';
-import { analyzeLevelSolution } from '../domain/levelSolver.js';
+import { analyzeLevelSolution, canCompleteFromState } from '../domain/levelSolver.js';
 import { generateUniqueLevel } from '../domain/levelGenerator.js';
 import { SoundFX } from '../audio/SoundFX.js';
 import { BoardRenderer } from '../rendering/BoardRenderer.js';
@@ -282,7 +283,7 @@ export class PathfinderScene extends Phaser.Scene {
 
   afterPlayerStep(r, c) {
     if (this.enemies.some((e) => e.r === r && e.c === c)) {
-      this.triggerLose(TEXTS.game.loseEnemy);
+      this.triggerLose(TEXTS.game.loseEnemy, LOSE_RESTART_DELAY_MS);
       return;
     }
 
@@ -300,8 +301,9 @@ export class PathfinderScene extends Phaser.Scene {
       }
     }
 
-    if (!hasAvailableMoves(this.grid, r, c) && this.gems.size > 0) {
-      this.triggerLose(TEXTS.game.loseSoftlock);
+    const remainingGemKeys = new Set(this.gems.keys());
+    if (!canCompleteFromState(this.grid, r, c, remainingGemKeys)) {
+      this.triggerLose(TEXTS.game.loseSoftlock, SOFTLOCK_RESTART_DELAY_MS);
     }
   }
 
@@ -334,7 +336,7 @@ export class PathfinderScene extends Phaser.Scene {
       );
 
       if (enemy.r === this.playerPos.r && enemy.c === this.playerPos.c) {
-        this.triggerLose(TEXTS.game.loseEnemy);
+        this.triggerLose(TEXTS.game.loseEnemy, LOSE_RESTART_DELAY_MS);
         return;
       }
     }
@@ -350,10 +352,14 @@ export class PathfinderScene extends Phaser.Scene {
     });
   }
 
-  triggerLose(reason) {
+  triggerLose(reason, delayMs = LOSE_RESTART_DELAY_MS) {
+    if (this.gameOver) return;
     this.gameOver = true;
     this.sfx.lose();
     this.boardRenderer.showBanner(TEXTS.game.formatLoseBanner(reason), TEXTS.game.loseColor);
+    this.time.delayedCall(delayMs, () => {
+      this.loadLevel(this.currentLevelIndex);
+    });
   }
 
   syncHud() {

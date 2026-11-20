@@ -1,5 +1,5 @@
-export const GAME_WIDTH = 500;
-export const GAME_HEIGHT = 750;
+export const GAME_WIDTH = 460;
+export const GAME_HEIGHT = 700;
 
 export const GRID_COLS = 6;
 export const GRID_ROWS = 9;
@@ -12,6 +12,8 @@ export const OFFSET_Y = (GAME_HEIGHT - GRID_ROWS * TILE_H) / 2;
 export const ENEMY_MOVE_DELAY_MS = 680;
 export const ENEMY_REST_TICKS = 2;
 export const WIN_NEXT_LEVEL_DELAY_MS = 1200;
+export const LOSE_RESTART_DELAY_MS = 2000;
+export const SOFTLOCK_RESTART_DELAY_MS = 4000;
 
 export const ENEMY_AXIS = {
   HORIZONTAL: 'horizontal',

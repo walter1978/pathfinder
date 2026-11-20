@@ -31,8 +31,8 @@ export const TEXTS = {
   game: {
     winBanner: '¡NIVEL COMPLETADO!',
     loseEnemy: '¡Te atrapó un diablillo!',
-    loseSoftlock: '¡Camino bloqueado!',
-    formatLoseBanner: (reason) => `${reason} (Pulsa R)`,
+    loseSoftlock: '¡Camino equivocado!\nYa no puedes recolectar todas las gemas',
+    formatLoseBanner: (reason) => reason,
     winColor: '#34d399',
     loseColor: '#f87171'
   }
